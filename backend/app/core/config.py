@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     qdrant_url: str = "http://localhost:6333"
     qdrant_collection: str = "repo_chunks"
+    qdrant_api_key: str = ""
 
     github_token: str = ""
 

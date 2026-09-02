@@ -26,7 +26,11 @@ class LocalHasher:
 
 class VectorStore:
     def __init__(self):
-        self.client = QdrantClient(url=settings.qdrant_url, timeout=30)
+        self.client = QdrantClient(
+    url=settings.qdrant_url,
+    api_key=settings.qdrant_api_key or None,
+    timeout=30,
+)
         self.embedder = LocalHasher()
         self.collection = settings.qdrant_collection
 
