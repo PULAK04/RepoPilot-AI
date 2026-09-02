@@ -1,16 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.api.deps import get_db, get_current_user
 from app.models import User, Repository, Analysis
 from app.schemas import AnalysisCreate, AnalysisOut
-from app.workers.tasks import run_analysis_task
+from app.workers.tasks import run_analysis
 
 router = APIRouter(prefix="/analyses", tags=["analyses"])
 
 
 @router.post("", response_model=AnalysisOut, status_code=201)
-def create_analysis(payload: AnalysisCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def create_analysis(
+    payload: AnalysisCreate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     repo = db.get(Repository, payload.repo_id)
     if not repo or repo.user_id != user.id:
         raise HTTPException(status_code=404, detail="Repository not found")
@@ -29,7 +34,7 @@ def create_analysis(payload: AnalysisCreate, db: Session = Depends(get_db), user
     db.add(analysis)
     db.commit()
     db.refresh(analysis)
-    run_analysis_task.delay(analysis.id)
+    background_tasks.add_task(run_analysis, analysis.id)
     return analysis
 
 

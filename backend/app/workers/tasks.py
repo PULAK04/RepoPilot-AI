@@ -1,7 +1,5 @@
 import asyncio
-from celery.utils.log import get_task_logger
 from sqlalchemy import select
-from app.workers.celery_app import celery_app
 from app.db.session import SessionLocal
 from app.models import Repository, Analysis
 from app.services.github import GitHubService
@@ -10,11 +8,12 @@ from app.services.vector_store import vector_store
 from app.services.progress import progress_service
 from app.agents.graph import repo_graph
 
-logger = get_task_logger(__name__)
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-@celery_app.task(name="sync_repository")
-def sync_repository_task(repo_id: int):
+def sync_repository(repo_id: int):
     db = SessionLocal()
     try:
         repo = db.get(Repository, repo_id)
@@ -60,8 +59,7 @@ def sync_repository_task(repo_id: int):
         db.close()
 
 
-@celery_app.task(name="run_analysis")
-def run_analysis_task(analysis_id: int):
+def run_analysis(analysis_id: int):
     db = SessionLocal()
     try:
         analysis = db.get(Analysis, analysis_id)
